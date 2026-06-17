@@ -318,12 +318,24 @@
                     body: formData
                 });
                 
+                const responseText = await response.text();
+                
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'File processing failed');
+                    let errorMsg = 'File processing failed';
+                    try {
+                        const error = JSON.parse(responseText);
+                        errorMsg = error.detail || errorMsg;
+                    } catch (e) {
+                        errorMsg = responseText || errorMsg;
+                    }
+                    throw new Error(errorMsg);
                 }
                 
-                const result = await response.json();
+                if (!responseText) {
+                    throw new Error('Empty response from server. Is the backend running?');
+                }
+                
+                const result = JSON.parse(responseText);
                 currentOutput = result.output;
                 
                 loading.classList.remove('show');
@@ -332,7 +344,11 @@
                 
             } catch (error) {
                 loading.classList.remove('show');
-                showError(error.message || 'Error uploading or processing file. Make sure the backend server is running on http://localhost:8000');
+                let errorMsg = error.message;
+                if (errorMsg.includes('Failed to fetch')) {
+                    errorMsg = 'Cannot connect to backend. Make sure it\'s running: python main.py';
+                }
+                showError(errorMsg);
             }
         }
         

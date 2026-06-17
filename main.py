@@ -1,7 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import PyPDF2
 import io
+
+try:
+    import PyPDF2
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
 
 app = FastAPI()
 
@@ -38,6 +43,11 @@ async def upload_file(file: UploadFile = File(...)) -> dict:
         if file_extension == ".txt":
             output = file_content.decode("utf-8")
         elif file_extension == ".pdf":
+            if not PDF_SUPPORT:
+                raise HTTPException(
+                    status_code=400,
+                    detail="PDF support not available. Please try a .txt file."
+                )
             output = extract_text_from_pdf(file_content)
         
         return {
@@ -56,6 +66,9 @@ async def upload_file(file: UploadFile = File(...)) -> dict:
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     """Extract text from PDF file"""
+    if not PDF_SUPPORT:
+        raise Exception("PyPDF2 not installed")
+    
     try:
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
         text = ""

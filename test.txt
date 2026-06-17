@@ -1,0 +1,7 @@
+This is a test file!
+
+You can upload this file through the frontend.
+The backend will read its content and return it as output.
+
+Feel free to replace this with your own content.
+Test successful!
